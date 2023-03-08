@@ -1,4 +1,4 @@
-use std::{path::Path, collections::HashMap, fs};
+use std::{path::Path, collections::HashMap, fs, time::Instant};
 
 use crate::util::mkdirp;
 use colored::Colorize;
@@ -35,18 +35,21 @@ impl Cache {
 
     pub fn load(mut self) -> Self {
         let cfg_path = Path::new(&self.dir).join(CONFIG_FILE);
-        println!("Loading cache from config file '{}'", cfg_path.to_str().unwrap());
+        log!("Loading cache from config file", cfg_path.to_str().unwrap());
 
         if !cfg_path.exists() {
+            warn!("Path doesn't exist, creating new file...");
             fs::File::create(&cfg_path).unwrap();
         }
 
         for line in fs::read_to_string(&cfg_path).unwrap().lines() {
             if line.is_empty() { continue; }
+
             let cols = line.split("\t").collect::<Vec<&str>>();
             let hash = *cols.get(0).unwrap();
             let dir = *cols.get(1).unwrap();
 
+            log!(format!("Caching: {} {}", hash, dir));
             self.tree.insert(hash.into(), dir.into());
         }
         self
@@ -54,21 +57,21 @@ impl Cache {
 
     pub fn repair(mut self) -> Self {
         info!("Repairing cache directory...");
-        debug!("Debugging cache...");
-        error!("There was a tiny error!");
-        fatal!("There was humungous error!!");
         success!("Directory fixed!");
         self
     }
 
     pub fn update(&mut self,  hash: &str, dir: &str) {
+        info!("Updating cache...");
         let cached_hash = self.tree.get(hash);
+        success!("Updated");
         self.tree.insert(hash.into(), dir.into());
     }
 
     pub fn clean(&mut self) {
-        println!("Cleaning all cache files...");
+        warn!("Cleaning all cache files...");
         cmd!("rm", ["-rf", &self.dir]);
+        success!("Cache is fresh and shiny ✨");
         self.tree.clear();
     }
 
@@ -120,5 +123,11 @@ mod tests {
     fn repairs_cache_tree() {
         let cache = Cache::new();
         cache.repair();
+    }
+
+    #[test]
+    fn cleans_cache() {
+        let mut cache = Cache::new();
+        cache.clean();
     }
 }

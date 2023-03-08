@@ -39,7 +39,7 @@ macro_rules! logger {
     ( $log_name:literal, $( $arg:expr )* $(,)* ) => {
         {
             let mut _ss = String::from($log_name);
-            $( _ss.push_str(&format!("{}", $arg)); )*
+            $( _ss.push_str(&format!("{} ", {$arg})); )*
             _ss
         }
     };
@@ -47,39 +47,40 @@ macro_rules! logger {
 
 macro_rules! log {
     ( $( $arg:expr $(,)*)* ) => {
-        println!("{}", logger!("❔ [INFO]", $($arg)*));
+        println!("{}", logger!("    ", $({$arg})*));
     };
 }
 
 macro_rules! info {
     ( $( $arg:expr $(,)*)* ) => {
-        println!("{}", logger!("❔ [INFO]", $($arg)*).blue());
+        println!("{}", logger!("❔ ", $({$arg})*).blue());
     };
 }
 
 macro_rules! debug {
     ( $( $arg:expr $(,)*)* ) => {
-        println!("{}", logger!("🐛 [DEBUG]", $($arg)*).magenta());
+        println!("{}", logger!("🐛 ", $({$arg})*).magenta());
     };
 }
 
 macro_rules! success {
     ( $( $arg:expr $(,)*)* ) => {
-        println!("{}", logger!("✅ [SUCCESS]", $($arg)*).green());
+        println!("{}", logger!("✅ ", $({$arg})*).green());
+    };
+}
+
+macro_rules! warn {
+    ( $( $arg:expr $(,)*)* ) => {
+        println!("{}", logger!("⚠️  ", $({$arg})*).yellow());
     };
 }
 
 macro_rules! error {
     ( $( $arg:expr $(,)*)* ) => {
-        println!("{}", logger!("❌ [ERROR]", $($arg)*).red());
+        println!("{}", logger!("❌ ", $({$arg})*).red());
     };
 }
 
-macro_rules! fatal {
-    ( $( $arg:expr $(,)*)* ) => {
-        println!("{}", logger!("📛 [FATAL]", $($arg)*).red());
-    };
-}
 
 
 #[cfg(test)]
@@ -90,9 +91,9 @@ mod tests {
     fn log_test() {
         log!("Just logging some stuff...", 123, 5);
         info!("Repairing cache directory...", "/dir/name");
-        debug!("Debugging cache...");
-        error!("There was a tiny error!");
-        fatal!("There was humungous error!!");
+        debug!("Debugging cache...", "Bug hiding here!", 345, "🐛");
+        warn!("Careful before proceeding!", "Yellow Stains");
+        error!("There was a tiny error!", "Code: ", 0x3276);
         success!("Directory fixed!");
     }
 }

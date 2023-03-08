@@ -17,3 +17,5 @@ pub mod app;
 
 pub use degit::*;
 pub use prelude::*;
+
+pub use colored::Colorize;

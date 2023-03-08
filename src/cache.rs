@@ -1,6 +1,7 @@
 use std::{path::Path, collections::HashMap, fs};
 
 use crate::util::mkdirp;
+use colored::Colorize;
 
 const CACHE_DIR: &'static str = ".regit";
 const TEMP_DIR: &'static str = ".tmp";
@@ -23,7 +24,13 @@ impl Cache {
         let dir = format!("{}/{}", home_dir, CACHE_DIR);
         mkdirp(Path::new(&dir));
 
-        Cache { dir, ..Default::default() }.load()
+        Cache { dir, ..Default::default() }
+    }
+
+    pub fn new_custom(dir: &str) -> Self {
+        let dir = Path::new(dir);
+        mkdirp(dir);
+        Cache { dir: dir.to_str().unwrap().to_owned(), ..Default::default() }
     }
 
     pub fn load(mut self) -> Self {
@@ -45,12 +52,17 @@ impl Cache {
         self
     }
 
-    pub fn repair(&mut self) {
-
+    pub fn repair(mut self) -> Self {
+        info!("Repairing cache directory...");
+        debug!("Debugging cache...");
+        error!("There was a tiny error!");
+        fatal!("There was humungous error!!");
+        success!("Directory fixed!");
+        self
     }
 
     pub fn update(&mut self,  hash: &str, dir: &str) {
-        let cached_hash = self.tree.get(hash)
+        let cached_hash = self.tree.get(hash);
         self.tree.insert(hash.into(), dir.into());
     }
 
@@ -93,10 +105,20 @@ mod tests {
         let expected_cfg_file = absolute_cache_dir.join(CONFIG_FILE);
         assert!(expected_cfg_file.exists(), "cache config file should be created");
         assert!(expected_cfg_file.is_file(), "cache config should be a valid file");
+
+        
     }
 
     #[test]
-    fn creates_config_file() {
+    fn loads_cache_tree() {
+        let cache = Cache::new().load();
 
+
+    }
+
+    #[test]
+    fn repairs_cache_tree() {
+        let cache = Cache::new();
+        cache.repair();
     }
 }

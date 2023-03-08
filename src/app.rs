@@ -27,7 +27,7 @@ impl Regit {
         Self {
             src: src.into(),
             repo: Repository::parse(src),
-            cache: Cache::new(),
+            cache: Cache::new().load(),
             options,
         }
     }
@@ -48,6 +48,12 @@ impl Regit {
     }
 
     fn clone_with_tar(&self, dest: &str) {
+        if self.options.cache {
+
+        }
+    }
+
+    fn clone_from_cache(&self, dest: &str) {
 
     }
 }

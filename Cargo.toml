@@ -12,6 +12,7 @@ path = "./src/bin/main.rs"
 [dependencies]
 async-recursion = "1.0.2"
 clap = { version = "4.1.8", features = ["derive"] }
+colored = "2.0.0"
 dirs = "4.0.0"
 flate2 = "1.0.25"
 futures = "0.3.26"

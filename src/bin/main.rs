@@ -1,6 +1,7 @@
 use std::{env::{Args, self}, path::Path};
 
-use degit_rs::{util::path_exists, Degit};
+// use degit_rs::{util::path_exists, Degit};
+use regit::{app::{Regit, RegitOptions}, util::path_exists};
 
 #[tokio::main]
 async fn main() {
@@ -9,22 +10,20 @@ async fn main() {
     if args.len() < 2 {
         panic!("INVALID_ARGS: 2 args are required");
     }
-    let (src, dest) = (args.next().unwrap(), &args.next().unwrap());
-    let src = Path::new(&src);
-    let dest = Path::new(&dest);
-
-    let empty = !path_exists(dest);
-    if !empty {
-
-    }
+    let (src, dest) = (args.next().unwrap(), args.next().unwrap()); 
     
-    run(src, dest).await;
+    run(&src, &dest).await;
 }
 
 
-async fn run(src: &Path, dest: &Path) {
-    let d = Degit::new(src.to_str().unwrap())
-        .build();
+async fn run(src: &str, dest: &str) {
+    if !Path::new(dest).exists() {
+        panic!("destination '{}' doesn't exist", dest);
+    }
+    // let d = Re::new(src.to_str().unwrap())
+    //     .build();
+    let regit = Regit::new(src, RegitOptions::default());
 
-    d.clone(dest).await;
+    regit.clone(dest).await;
+    // d.clone(dest).await;
 }

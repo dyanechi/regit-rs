@@ -32,7 +32,7 @@ impl Regit {
         }
     }
 
-    pub fn clone() {
+    pub async fn clone(&self, dest: &str) {
         
     }
 }

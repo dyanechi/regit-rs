@@ -1,5 +1,6 @@
 use std::{fs, path::{self, Path, PathBuf}, io, borrow::Cow, process::Command};
 
+use super::*;
 use async_recursion::async_recursion;
 use url::Url;
 
@@ -69,12 +70,13 @@ impl Default for FetchOptions {
 
 #[async_recursion]
 pub async fn fetch(url: &str, dest: &str, proxy: &str) -> Result<(), String> {
-    let mut options = FetchOptions::new(url, None);
+    // let mut options = FetchOptions::new(url, None);
 
-    if proxy.len() > 0 {
-        options.agent = Some(Agent::new(proxy));
-    }
+    // if proxy.len() > 0 {
+    //     options.agent = Some(Agent::new(proxy));
+    // }
 
+    info!(format!("Fetching repository from '{}'", url));
     let res = minreq::get(url).send().unwrap();
     let code = res.status_code;
     if code >= 400 {
@@ -82,6 +84,7 @@ pub async fn fetch(url: &str, dest: &str, proxy: &str) -> Result<(), String> {
     } else if code >= 300 {
         fetch(res.headers.get("location").unwrap(), dest, proxy).await.unwrap();
     } else {
+        info!(format!("Saving file to '{}'", dest));
         fs::write(dest, res.as_bytes()).expect("failed writing to file");
     }
 

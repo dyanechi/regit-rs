@@ -20,10 +20,7 @@ async fn run(src: &str, dest: &str) {
     if !Path::new(dest).exists() {
         panic!("destination '{}' doesn't exist", dest);
     }
-    // let d = Re::new(src.to_str().unwrap())
-    //     .build();
     let regit = Regit::new(src, RegitOptions::default());
-
     regit.clone(dest).await;
     // d.clone(dest).await;
 }

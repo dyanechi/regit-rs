@@ -1,7 +1,7 @@
 use std::{path::Path, collections::HashMap, fs, time::Instant};
 
+use super::*;
 use crate::util::mkdirp;
-use colored::Colorize;
 
 const CACHE_DIR: &'static str = ".regit";
 const TEMP_DIR: &'static str = ".tmp";
@@ -82,6 +82,10 @@ impl Cache {
     pub fn unstash_files(&self, dir: &Path, dest: &Path) {
 
     }
+
+    pub(crate) fn dir(&self) -> &str { self.dir.as_ref() }
+    pub(crate) fn tree(&self) -> &CacheTree { &self.tree }
+    pub(crate) fn tree_mut(&mut self) -> &mut CacheTree { &mut self.tree }
 }
 impl Cache {
     // un

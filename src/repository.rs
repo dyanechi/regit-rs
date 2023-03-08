@@ -7,7 +7,6 @@ use crate::options::ValidModes;
 const SUPPORTED_SITES: [&'static str; 4] = ["github.com", "gitlab.com", "bitbucket.org", "git.sr.ht"];
 const RE_VALID_REPO: &'static str = r"^(?:(?:https://)?([^:/]+\.[^:/]+)/|git@([^:/]+)[:/]|([^/]+):)?([^/\s]+)/([^/\s#]+)(?:((?:/[^/\s#]+)+))?(?:/)?(?:#(.+))?";
 
-
 type HashCache = HashMap<String, String>;
 
 #[derive(Default, Debug, Clone)]
@@ -32,14 +31,14 @@ impl Ref {
 
 #[derive(Default, Debug, Clone)]
 pub struct Repository {
-    url: String,
-    domain: String,
-    user: String,
-    name: String,
-    sub_dir: String,
-    _ref: String,
-    ssh: String,
-    mode: ValidModes,
+    pub url: String,
+    pub domain: String,
+    pub user: String,
+    pub name: String,
+    pub sub_dir: String,
+    pub _ref: String,
+    pub ssh: String,
+    pub mode: ValidModes,
     refs: Vec<Ref>
 }
 impl Repository {
@@ -65,8 +64,8 @@ impl Repository {
         let sub_dir = matches.get(6).map_or("", |m| &m.as_str()[1..m.as_str().len()]).to_string();
         let _ref = matches.get(7).map_or("HEAD", |m| m.as_str()).to_string();
 
-        let url = format!("https://{domain}/{user}/{name}");
         let ssh = format!("git@{domain}:{user}/{name}");
+        let url = format!("https://{domain}/{user}/{name}");
 
         let refs = Self::fetch_refs(url.as_str());
 
@@ -83,12 +82,12 @@ impl Repository {
         }
     }
 
-    pub fn tar() {
-
-    }
-
-    pub fn untar() {
-        
+    pub fn archive_url(&self, hash: &str) -> String {
+        match self.domain.as_str() {
+            "gitlab" => format!("{}/repository/archive.tar.gz?ref={}", self.url, hash),
+            "bitbucket" => format!("{}/get/{}.tar.gz", self.url, hash),
+            _ => format!("{}/archive/{}.tar.gz", self.url, hash),
+        }
     }
 
     pub fn get_hash(&self) -> String {

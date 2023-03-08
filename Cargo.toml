@@ -1,0 +1,24 @@
+[package]
+name = "degit-rs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "degit-rs"
+path = "./src/bin/main.rs"
+
+[dependencies]
+async-recursion = "1.0.2"
+clap = { version = "4.1.8", features = ["derive"] }
+dirs = "4.0.0"
+flate2 = "1.0.25"
+futures = "0.3.26"
+minreq = { version = "2.6.0", features = ["rustls", "https"] }
+regex = "1.7.1"
+serde = "1.0.152"
+serde_json = "1.0.93"
+tar = "0.4.38"
+tokio = { version = "1.26.0", features = ["full"] }
+url = "2.3.1"

@@ -25,10 +25,10 @@ pub fn mkdirp(dir: &Path) {
     let parent = dir.parent().unwrap();
     if parent == dir { return };
 
-    if !dir_exists(&parent) {
+    if !parent.exists() {
         mkdirp(&parent);
     } else {
-        if dir_exists(&dir) { return; };
+        if dir.exists() { return; };
         
         let dir = dir.to_str().unwrap_or_default().to_owned();
         println!("Creating directory: '{}'", dir);
@@ -91,105 +91,105 @@ pub async fn fetch(url: &str, dest: &str, proxy: &str) -> Result<(), String> {
     Ok(())
 }
 
-pub fn copy_dir_sync(from: &Path, to: &Path) -> io::Result<()> {
-    // let (from, to) = (Path::new(from), Path::new(to));
-    if from.is_dir() {
-        let dir = fs::create_dir_all(to)?;
-        fs::read_dir(from).unwrap().for_each(|r| {
-            let entry = r.unwrap();
-            let path = entry.path();
+// pub fn copy_dir_sync(from: &Path, to: &Path) -> io::Result<()> {
+//     // let (from, to) = (Path::new(from), Path::new(to));
+//     if from.is_dir() {
+//         let dir = fs::create_dir_all(to)?;
+//         fs::read_dir(from).unwrap().for_each(|r| {
+//             let entry = r.unwrap();
+//             let path = entry.path();
 
-            if path.is_dir() { copy_dir_sync(&path, to); }
-            else {
-                let target = Path::new(&to).join(entry.file_name());
-                fs::copy(from, target);
-            }
-        })
-    }
-    Ok(())
-}
+//             if path.is_dir() { copy_dir_sync(&path, to); }
+//             else {
+//                 let target = Path::new(&to).join(entry.file_name());
+//                 fs::copy(from, target);
+//             }
+//         })
+//     }
+//     Ok(())
+// }
 
-pub fn assert_dir_exists(dest: &Path) {
-    if ! path_exists(dest) {
-        panic!("DIR_NOT_EXIST: directory '{}' does not exist", dest.to_str().unwrap_or_default());
-    };
-}
+// pub fn assert_dir_exists(dest: &Path) {
+//     if ! path_exists(dest) {
+//         panic!("DIR_NOT_EXIST: directory '{}' does not exist", dest.to_str().unwrap_or_default());
+//     };
+// }
 
-pub fn assert_dir_is_empty(dest: &Path) {
-    if ! dir_is_empty(dest) {
-        panic!("DIR_NOT_EMPTY: directory '{}' contain files", dest.to_str().unwrap_or_default());
-    };
-}
+// pub fn assert_dir_is_empty(dest: &Path) {
+//     if ! dir_is_empty(dest) {
+//         panic!("DIR_NOT_EMPTY: directory '{}' contain files", dest.to_str().unwrap_or_default());
+//     };
+// }
 
-pub fn path_exists(dest: &Path) -> bool {
-    fs::try_exists(path::absolute(dest).unwrap()).unwrap()
-}
+// pub fn path_exists(dest: &Path) -> bool {
+//     fs::try_exists(path::absolute(dest).unwrap()).unwrap()
+// }
 
-pub fn dir_exists(dest: &Path) -> bool {
-    if path_exists(dest) {
-        return fs::metadata(dest).unwrap().is_dir()
-    }
-    false
-}
+// pub fn dir_exists(dest: &Path) -> bool {
+//     if path_exists(dest) {
+//         return fs::metadata(dest).unwrap().is_dir()
+//     }
+//     false
+// }
 
-pub fn file_exists(dest: &Path) -> bool {
-    if path_exists(dest) {
-        return fs::metadata(dest).unwrap().is_file()
-    }
-    false
-}
+// pub fn file_exists(dest: &Path) -> bool {
+//     if path_exists(dest) {
+//         return fs::metadata(dest).unwrap().is_file()
+//     }
+//     false
+// }
 
-pub fn dir_is_empty(dest: &Path) -> bool {
-    // assert_dir_exists(dest);
-    mkdirp(dest);
-    fs::read_dir(dest).unwrap().count() == 0
-}
+// pub fn dir_is_empty(dest: &Path) -> bool {
+//     // assert_dir_exists(dest);
+//     mkdirp(dest);
+//     fs::read_dir(dest).unwrap().count() == 0
+// }
 
-pub fn path_metadata(dest: &Path) -> std::io::Result<fs::Metadata> {
-    if path_exists(dest) {
-        return fs::metadata(dest)
-    }
-    Err(io::Error::new(io::ErrorKind::NotFound, "path doesn't exist"))
-}
+// pub fn path_metadata(dest: &Path) -> std::io::Result<fs::Metadata> {
+//     if path_exists(dest) {
+//         return fs::metadata(dest)
+//     }
+//     Err(io::Error::new(io::ErrorKind::NotFound, "path doesn't exist"))
+// }
 // pub fn resolve_path(path: &Path) {
 //     path::ab
 // }
 
-pub fn stash_files(dir: &Path, dest: &Path) {
-    let tmp_dir = Path::new(dir).join(TMP_DIR_NAME);
-    fs::remove_dir_all(&tmp_dir).unwrap();
-    mkdirp(&tmp_dir);
+// pub fn stash_files(dir: &Path, dest: &Path) {
+//     let tmp_dir = Path::new(dir).join(TMP_DIR_NAME);
+//     fs::remove_dir_all(&tmp_dir).unwrap();
+//     mkdirp(&tmp_dir);
 
-    fs::read_dir(&tmp_dir).unwrap().for_each(|r| {
-        let entry = r.unwrap();
-        let file_path = Path::new(dest).join(entry.path());
-        let target_path = Path::new(&tmp_dir).join(entry.path());
-        if file_path.is_dir() {
-            copy_dir_sync(&file_path, &target_path).unwrap();
-            fs::remove_dir_all(&file_path).unwrap();
-        } else {
-            fs::copy(&file_path, &target_path).unwrap();
-        }
-    })
-}
+//     fs::read_dir(&tmp_dir).unwrap().for_each(|r| {
+//         let entry = r.unwrap();
+//         let file_path = Path::new(dest).join(entry.path());
+//         let target_path = Path::new(&tmp_dir).join(entry.path());
+//         if file_path.is_dir() {
+//             copy_dir_sync(&file_path, &target_path).unwrap();
+//             fs::remove_dir_all(&file_path).unwrap();
+//         } else {
+//             fs::copy(&file_path, &target_path).unwrap();
+//         }
+//     })
+// }
 
-pub fn unstash_files(dir: &Path, dest: &Path) {
-    let tmp_dir = Path::new(dir).join(TMP_DIR_NAME);
-    fs::remove_dir_all(&tmp_dir).unwrap();
-    mkdirp(&tmp_dir);
+// pub fn unstash_files(dir: &Path, dest: &Path) {
+//     let tmp_dir = Path::new(dir).join(TMP_DIR_NAME);
+//     fs::remove_dir_all(&tmp_dir).unwrap();
+//     mkdirp(&tmp_dir);
 
-    fs::read_dir(&tmp_dir).unwrap().for_each(|r| {
-        let entry = r.unwrap();
-        let file_path = Path::new(dest).join(entry.path());
-        let target_path = Path::new(&tmp_dir).join(entry.path());
-        if file_path.is_dir() {
-            copy_dir_sync(&file_path, &target_path).unwrap();
-            fs::remove_dir_all(&file_path).unwrap();
-        } else {
-            fs::copy(&file_path, &target_path).unwrap();
-        }
-    })
-}
+//     fs::read_dir(&tmp_dir).unwrap().for_each(|r| {
+//         let entry = r.unwrap();
+//         let file_path = Path::new(dest).join(entry.path());
+//         let target_path = Path::new(&tmp_dir).join(entry.path());
+//         if file_path.is_dir() {
+//             copy_dir_sync(&file_path, &target_path).unwrap();
+//             fs::remove_dir_all(&file_path).unwrap();
+//         } else {
+//             fs::copy(&file_path, &target_path).unwrap();
+//         }
+//     })
+// }
 
 
 

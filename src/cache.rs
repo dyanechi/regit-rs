@@ -5,7 +5,7 @@ use crate::util::mkdirp;
 
 const CACHE_DIR: &'static str = ".regit";
 const TEMP_DIR: &'static str = ".tmp";
-const CONFIG_FILE: &'static str = "config.rt";
+const CONFIG_FILE: &'static str = "config.json";
 
 type CacheTree = HashMap<String, String>;
 
@@ -42,16 +42,25 @@ impl Cache {
             fs::File::create(&cfg_path).unwrap();
         }
 
-        for line in fs::read_to_string(&cfg_path).unwrap().lines() {
-            if line.is_empty() { continue; }
+        let file = fs::File::open(&cfg_path).expect("should open file");
+        let reader = std::io::BufReader::new(file);
+        let tree: CacheTree = serde_json::from_reader(reader).unwrap_or_default();
+        for t in tree.values() {
+            debug!("Retrieved CacheTree value:", t);
 
-            let cols = line.split("\t").collect::<Vec<&str>>();
-            let hash = *cols.get(0).unwrap();
-            let dir = *cols.get(1).unwrap();
-
-            log!(format!("Caching: {} {}", hash, dir));
-            self.tree.insert(hash.into(), dir.into());
         }
+
+
+        // for line in fs::read_to_string(&cfg_path).unwrap().lines() {
+        //     if line.is_empty() { continue; }
+
+        //     let cols = line.split("\t").collect::<Vec<&str>>();
+        //     let hash = *cols.get(0).unwrap();
+        //     let dir = *cols.get(1).unwrap();
+
+        //     log!(format!("Caching: {} {}", hash, dir));
+        //     self.tree.insert(hash.into(), dir.into());
+        // }
         self
     }
 
@@ -61,11 +70,24 @@ impl Cache {
         self
     }
 
-    pub fn update(&mut self,  hash: &str, dir: &str) {
+    pub fn update(&mut self, repo_ref: &str, hash: &str, repo_dir: &str) {
         info!("Updating cache...");
-        let cached_hash = self.tree.get(hash);
+        if let Some(cached_hash) = self.tree.get(repo_ref) {
+            if cached_hash == hash { return; }
+            if !self.tree.values().collect::<Vec<_>>().contains(&&hash.to_string()) {
+                std::fs::remove_dir(format!("{}/{}.tar.gz", repo_dir, hash)).unwrap();
+            }
+        }
+
+        self.tree.insert(repo_ref.into(), hash.into());
+
+        let cache_map_path = Path::new(self.dir()).join(CONFIG_FILE);
+        let cache_file = {
+            if !cache_map_path.exists() { std::fs::File::create(&cache_map_path).unwrap(); }
+            std::fs::File::options().write(true).open(cache_map_path).unwrap()
+        };
+        serde_json::to_writer(cache_file, &self.tree).expect("should serialize config file");
         success!("Updated");
-        self.tree.insert(hash.into(), dir.into());
     }
 
     pub fn clean(&mut self) {

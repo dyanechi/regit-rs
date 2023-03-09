@@ -1,7 +1,7 @@
+#![macro_use]
 use std::{env::{Args, self}, path::Path};
 
-// use degit_rs::{util::path_exists, Degit};
-use regit::{app::{Regit, RegitOptions}, util::path_exists};
+use regit::{app::{Regit, RegitOptions}};
 
 #[tokio::main]
 async fn main() {
@@ -15,12 +15,7 @@ async fn main() {
     run(&src, &dest).await;
 }
 
-
 async fn run(src: &str, dest: &str) {
-    if !Path::new(dest).exists() {
-        panic!("destination '{}' doesn't exist", dest);
-    }
-    let regit = Regit::new(src, RegitOptions::default());
+    let mut regit = Regit::new(src, RegitOptions::default());
     regit.clone(dest).await;
-    // d.clone(dest).await;
 }

@@ -5,16 +5,26 @@ use std::path::Path;
 use super::*;
 use crate::{
     options::ValidModes,
-    repository::Repository, cache::Cache, util::{mkdirp, fetch}
+    repository::Repository, cache::Cache, util::{mkdirp, fetch}, traits::{AsStr, AsString}
 };
 
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct RegitOptions {
     cache: bool,
     force: bool,
     verbose: bool,
     has_stashed: bool,
+}
+impl Default for RegitOptions {
+    fn default() -> Self {
+        Self { 
+            cache: true, 
+            force: false, 
+            verbose: false,
+            has_stashed: false
+        }
+    }
 }
 
 #[derive(Debug, Default)]
@@ -43,12 +53,18 @@ impl Regit {
             _ref, ..
         } = &self.repo;
 
-        let dir = Path::new(self.cache.dir())
+        let dest_path= std::path::absolute(dest).unwrap();
+        if !dest_path.exists() {
+            warn!("destination '{}' doesn't exist! Attempting to create path...", dest);
+            mkdirp(&dest_path);
+        }
+
+        let repo_dir = Path::new(self.cache.dir())
             .join(format!("{}/{}/{}", domain, user, name));
 
-        if ! dir.exists() { mkdirp(&dir) }
+        if ! repo_dir.exists() { mkdirp(&repo_dir) }
         match self.repo.mode {
-            ValidModes::Tar => self.clone_with_tar(&dir, Path::new(dest)).await,
+            ValidModes::Tar => self.clone_with_tar(&repo_dir, &dest_path).await,
             ValidModes::Git => self.clone_with_git(dest)
         }
     }
@@ -64,7 +80,7 @@ impl Regit {
         cmd!("rm", ["-rf", &git]);
     }
 
-    async fn clone_with_tar(&mut self, dir: &Path, dest: &Path) {
+    async fn clone_with_tar(&mut self, repo_dir: &Path, dest: &Path) {
         info!("Cloning repository in Tar mode...");
         let repo = self.repo.to_owned();
         let cache = self.cache.tree_mut();
@@ -74,21 +90,26 @@ impl Regit {
             format!("{}-{}", repo.name, hash)
         } else { repo.sub_dir.replacen("/", &repo.sub_dir, 1) };
 
-        let file = Path::new(&format!("{}/{}", dir.to_str().unwrap(), hash)).to_owned();
+        let file = Path::new(&format!("{}/{}.tar.gz", repo_dir.as_str(), hash)).to_owned();
 
         if !dest.exists() { mkdirp(dest) }
-        if self.options.cache {
-            if file.exists() && file.is_file() {
+        if std::fs::read_dir(dest).unwrap().count() > 0 {
+            error!(format!("Destination '{}' not empty!", dest.display())); panic!("dir not empty");
+        }
+        if file.exists() && file.is_file() {
+            if self.options.cache {
                 info!("File found in cache! Using it to make things faster...");
                 Self::untar(&file, &dest, &sub_dir);
                 return;
             }
-        }
+        } else { mkdirp(file.parent().unwrap()); }
         
-        fetch(&archive_url, dest.to_str().unwrap(), "").await.unwrap();
-        self.cache.update(&hash, dir.to_str().unwrap());
+        
+        fetch(&archive_url, file.as_str(), "").await.unwrap();
+        self.cache.update(&hash, &repo._ref, repo_dir.as_str());
         Self::untar(&file, &dest, &sub_dir);
 
+        success!("Repository successfully cloned! Happy coding :)");
     }
 
     fn clone_from_cache(&self, dest: &str) {
@@ -98,13 +119,29 @@ impl Regit {
 
 impl Regit {
     fn untar(file: &Path, dest: &Path, sub_dir: &str) {
-        info!(format!(
-            "Extracting '{}' from '{}' to '{}'",
-            sub_dir,
-            file.to_str().unwrap_or_default(),
-            dest.to_str().unwrap_or_default()
-        ));
+        let archive_name = file.file_prefix().unwrap().to_str().unwrap();
+        let target = format!("{}/{}", dest.as_str(), sub_dir);
+        info!(format!("Extracting '{}' to '{}'", file.as_str(), target));
 
-        
+
+        let file = std::fs::File::open(file).expect("error opening file");
+        let stream = flate2::read::GzDecoder::new(file);
+        let mut archive = tar::Archive::new(stream);
+
+        if sub_dir.is_empty() {
+            log!("Unpacking full archive to destination...");
+            archive.unpack(dest).expect("unpacking directory failed");
+        } else {
+            log!(format!("Unpacking '{}' to destination...", sub_dir));
+            for entry in archive.entries().unwrap() {
+                let mut entry = entry.unwrap();
+                let entry_path = entry.path().unwrap().as_string();
+
+                if entry_path.starts_with(&format!("{}/{}/", archive_name, sub_dir)) {
+                    log!(format!("Extracting '{}'...", entry_path));
+                    entry.unpack(&target).expect(" should extract to destination");
+                }
+            };
+        }
     }
 }

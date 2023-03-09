@@ -47,7 +47,7 @@ macro_rules! logger {
 
 macro_rules! log {
     ( $( $arg:expr $(,)*)* ) => {
-        println!("{}", logger!("    ", $({$arg})*));
+        println!("{}", logger!("   ", $({$arg})*));
     };
 }
 
@@ -65,7 +65,7 @@ macro_rules! debug {
 
 macro_rules! success {
     ( $( $arg:expr $(,)*)* ) => {
-        println!("{}", logger!("✅ ", $({$arg})*).green());
+        println!("{}{}", logger!("✅ ", $({$arg})*).green(), "\n");
     };
 }
 

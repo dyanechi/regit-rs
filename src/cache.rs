@@ -46,7 +46,7 @@ impl Cache {
         let reader = std::io::BufReader::new(file);
         let tree: CacheTree = serde_json::from_reader(reader).unwrap_or_default();
         for t in tree.values() {
-            debug!("Retrieved CacheTree value:", t);
+            debug!("Retrieved cache for ref:", t);
 
         }
 

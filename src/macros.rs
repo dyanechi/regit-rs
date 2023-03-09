@@ -47,7 +47,7 @@ macro_rules! logger {
 
 macro_rules! log {
     ( $( $arg:expr $(,)*)* ) => {
-        println!("{}", logger!("   ", $({$arg})*));
+        println!("{}", logger!("   ", $({$arg})*).dimmed());
     };
 }
 
@@ -66,18 +66,17 @@ macro_rules! debug {
 macro_rules! success {
     ( $( $arg:expr $(,)*)* ) => {
         println!("{}{}", logger!("✅ ", $({$arg})*).green(), "\n");
-    };
-}
-
-macro_rules! warn {
-    ( $( $arg:expr $(,)*)* ) => {
-        println!("{}", logger!("⚠️  ", $({$arg})*).yellow());
-    };
-}
+    };pack
 
 macro_rules! error {
     ( $( $arg:expr $(,)*)* ) => {
-        println!("{}", logger!("❌ ", $({$arg})*).red());
+        println!("{}{}", logger!("❌ ", $({$arg})*).red(), "\n");
+    };
+}
+
+macro_rules! done {
+    ( $( $arg:expr $(,)*)* ) => {
+        println!("{}{}", logger!("✨ ", $({$arg})*).green(), "✨\n");
     };
 }
 

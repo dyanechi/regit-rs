@@ -4,36 +4,37 @@ use super::*;
 use async_recursion::async_recursion;
 use url::Url;
 
-pub const BASE_DIR: &'static str = ".degit-rs";
-pub const TMP_DIR_NAME: &'static str = "tmp";
-pub const DEGIT_CONFIG_NAME: &'static str = "degit.json";
+// pub const BASE_DIR: &'static str = ".degit-rs";
+// pub const TMP_DIR_NAME: &'static str = "tmp";
+// pub const DEGIT_CONFIG_NAME: &'static str = "degit.json";
 
-pub fn base_dir() -> PathBuf {
-    let home = String::from_utf8(
-    Command::new("pwd")
-            .output()
-            .expect("should return user's directory")
-            .stdout
-    ).unwrap();
-    let base = PathBuf::new().join(format!("{}/{}", home, BASE_DIR).as_str()).to_owned();
-    mkdirp(&base);
-    base
-}
+// pub fn base_dir() -> PathBuf {
+//     let home = String::from_utf8(
+//     Command::new("pwd")
+//             .output()
+//             .expect("should return user's directory")
+//             .stdout
+//     ).unwrap();
+//     let base = PathBuf::new().join(format!("{}/{}", home, BASE_DIR).as_str()).to_owned();
+//     mkdirp(&base);
+//     base
+// }
 
 pub fn mkdirp(dir: &Path) {
     let dir = path::absolute(dir).unwrap();
-    let parent = dir.parent().unwrap();
-    if parent == dir { return };
+    fs::create_dir_all(&dir).expect("should create all directories");
+    // let parent = dir.parent().unwrap();
+    // if parent == dir { return };
 
-    if !parent.exists() {
-        mkdirp(&parent);
-    } else {
-        if dir.exists() { return; };
+    // if !parent.exists() {
+    //     mkdirp(&parent);
+    // } else {
+    //     if dir.exists() { return; };
         
-        let dir = dir.to_str().unwrap_or_default().to_owned();
-        println!("Creating directory: '{}'", dir);
-        fs::create_dir(&dir).expect(format!("failed creating directory '{}'", dir).as_str());
-    }
+    //     let dir = dir.to_str().unwrap_or_default().to_owned();
+    //     println!("Creating directory: '{}'", dir);
+    //     fs::create_dir(&dir).expect(&format!("failed creating directory '{}'", dir));
+    // }
 }
 
 #[derive(Default)]

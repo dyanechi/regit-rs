@@ -1,5 +1,6 @@
 use std::{collections::HashMap, process, str};
 
+use super::*;
 use regex::Regex;
 
 use crate::options::ValidModes;
@@ -43,7 +44,7 @@ pub struct Repository {
 }
 impl Repository {
     pub fn parse(src: &str) -> Self {
-        println!("Parsing src: '{}'...", src);
+        log!(format!("Parsing repository: '{}'...", src));
         let re = Regex::new(RE_VALID_REPO).unwrap();
         let matches = re.captures(src).unwrap();
 
@@ -55,8 +56,9 @@ impl Repository {
         let mut mode = ValidModes::Tar;
         if ! SUPPORTED_SITES.contains(&domain.as_str()) {
             mode = ValidModes::Git;
-            eprintln!("\n\n!!UNSUPPORTED_HOST: degit-rs supports GitHub, GitLab, SourceHut and BitBucket");
-            eprintln!("WARN: Switching to 'Git' mode. It might not work properly.");
+            error!("ReGit only supports GitHub, GitLab, SourceHut and BitBucket domains.");
+            panic!("domain not supported");
+            // eprintln!("WARN: Switching to 'Git' mode. It might not work properly.");
         }
 
         let user = matches.get(4).map_or("", |m| m.as_str()).to_string();
@@ -68,6 +70,8 @@ impl Repository {
         let url = format!("https://{domain}/{user}/{name}");
 
         let refs = Self::fetch_refs(url.as_str());
+
+        success!(format!("Using '{}' as repository source", url));
 
         Repository { 
             url, 
@@ -107,7 +111,7 @@ impl Repository {
 }
 impl Repository {
     fn fetch_refs(url: &str) -> Vec<Ref> {
-        println!("Fetching refs...");
+        log!("Fetching refs...");
         let output = cmd!("git", ["ls-remote", url]).stdout;
         let stdout = str::from_utf8(&output).unwrap();
 

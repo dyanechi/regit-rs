@@ -59,7 +59,7 @@ macro_rules! info {
 
 macro_rules! debug {
     ( $( $arg:expr $(,)*)* ) => {
-        println!("{}", logger!("🐛 ", $({$arg})*).magenta());
+        println!("{}", logger!("   ", $({$arg})*).magenta());
     };
 }
 

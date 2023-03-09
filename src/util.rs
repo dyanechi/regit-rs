@@ -33,7 +33,7 @@ impl Default for FetchOptions {
 
 #[async_recursion]
 pub async fn fetch(url: &str, dest: &str, proxy: &str) -> Result<(), String> {
-    info!(format!("Fetching repository from '{}'", url));
+    info!(format!("Fetching remote repository '{}'", url));
     let res = minreq::get(url).send().unwrap();
     let code = res.status_code;
     if code >= 400 {

@@ -86,10 +86,10 @@ impl Regit {
         let cache = self.cache.tree_mut();
         let hash = repo.get_hash_cached(&cache);
         let archive_url = repo.archive_url(&hash);
-        let sub_dir = if repo.sub_dir.is_empty() {
-            format!("{}-{}", repo.name, hash)
-        } else { repo.sub_dir.replacen("/", &repo.sub_dir, 1) };
-
+        // let sub_dir = if repo.sub_dir.is_empty() {
+        //     format!("{}-{}", repo.name, hash)
+        // } else { repo.sub_dir.replacen("/", &repo.sub_dir, 1) };
+        let sub_dir = format!("{}-{}/{}", repo.name, hash, repo.sub_dir);
         let file = Path::new(&format!("{}/{}.tar.gz", repo_dir.as_str(), hash)).to_owned();
 
         if !dest.exists() { mkdirp(dest) }
@@ -120,8 +120,8 @@ impl Regit {
 impl Regit {
     fn untar(file: &Path, dest: &Path, sub_dir: &str) {
         let archive_name = file.file_prefix().unwrap().to_str().unwrap();
-        let target = format!("{}/{}", dest.as_str(), sub_dir);
-        info!(format!("Extracting '{}' to '{}'", file.as_str(), target));
+        // let target = format!("{}/{}", dest.as_str(), sub_dir);
+        info!(format!("Extracting '{}' to '{}'", file.as_str(), dest.as_str()));
 
 
         let file = std::fs::File::open(file).expect("error opening file");
@@ -136,10 +136,14 @@ impl Regit {
             for entry in archive.entries().unwrap() {
                 let mut entry = entry.unwrap();
                 let entry_path = entry.path().unwrap().as_string();
+                let dir_path = format!("{}/", sub_dir);
 
-                if entry_path.starts_with(&format!("{}/{}/", archive_name, sub_dir)) {
-                    log!(format!("Extracting '{}'...", entry_path));
-                    entry.unpack(&target).expect(" should extract to destination");
+                // log!(&entry_path);
+                // debug!("Matching against:", &format!("{}/", sub_dir));
+                if entry_path.starts_with(&dir_path) {
+                    let file_path = format!("{}/{}", dest.as_str(), entry_path.replace(&dir_path, ""));
+                    debug!(format!("Extracting '{}' to '{}'...", entry_path, file_path));
+                    entry.unpack(&file_path).expect(" should extract to destination");
                 }
             };
         }

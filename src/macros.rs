@@ -53,7 +53,7 @@ macro_rules! log {
 
 macro_rules! info {
     ( $( $arg:expr $(,)*)* ) => {
-        println!("{}", logger!("❔ ", $({$arg})*).blue());
+        println!("{}", logger!("ℹ️  ", $({$arg})*).blue());
     };
 }
 

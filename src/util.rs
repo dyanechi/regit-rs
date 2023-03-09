@@ -85,6 +85,7 @@ pub async fn fetch(url: &str, dest: &str, proxy: &str) -> Result<(), String> {
         fetch(res.headers.get("location").unwrap(), dest, proxy).await.unwrap();
     } else {
         info!(format!("Saving file to '{}'", dest));
+        mkdirp(Path::new(dest).parent().unwrap());
         fs::write(dest, res.as_bytes()).expect("failed writing to file");
     }
 

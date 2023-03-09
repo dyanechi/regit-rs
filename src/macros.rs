@@ -66,7 +66,14 @@ macro_rules! debug {
 macro_rules! success {
     ( $( $arg:expr $(,)*)* ) => {
         println!("{}{}", logger!("✅ ", $({$arg})*).green(), "\n");
-    };pack
+    };
+}
+
+macro_rules! warn {
+    ( $( $arg:expr $(,)*)* ) => {
+        println!("{}{}", logger!("⚠️  ", $({$arg})*).yellow(), "\n");
+    };
+}
 
 macro_rules! error {
     ( $( $arg:expr $(,)*)* ) => {

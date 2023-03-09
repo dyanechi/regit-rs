@@ -12,12 +12,10 @@ pub mod util;
 pub mod cache;
 pub mod options;
 pub mod repository;
-// pub mod degit;
 pub mod traits;
 pub mod prelude;
 pub mod app;
 
-// pub use degit::*;
 pub use prelude::*;
 
 pub use colored::Colorize;

@@ -50,17 +50,6 @@ impl Cache {
 
         }
 
-
-        // for line in fs::read_to_string(&cfg_path).unwrap().lines() {
-        //     if line.is_empty() { continue; }
-
-        //     let cols = line.split("\t").collect::<Vec<&str>>();
-        //     let hash = *cols.get(0).unwrap();
-        //     let dir = *cols.get(1).unwrap();
-
-        //     log!(format!("Caching: {} {}", hash, dir));
-        //     self.tree.insert(hash.into(), dir.into());
-        // }
         self
     }
 

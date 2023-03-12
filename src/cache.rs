@@ -115,9 +115,8 @@ mod tests {
         assert_eq!(cache.dir, expected_dir, 
             "cache dir should match expected_dir");
 
-        let absolute_cache_dir = path::absolute(format!(
-            "{}/{}", dirs::home_dir().unwrap().to_str().unwrap(), CACHE_DIR)
-        ).unwrap(); 
+        let absolute_cache_dir = format!("{}/{}", dirs::home_dir().unwrap().to_str().unwrap(), CACHE_DIR);
+        let absolute_cache_dir = Path::new(&absolute_cache_dir);
         assert!(absolute_cache_dir.exists(), "cache dir should exist");
 
         let expected_cfg_file = absolute_cache_dir.join(CONFIG_FILE);

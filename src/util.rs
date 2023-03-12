@@ -5,7 +5,7 @@ use async_recursion::async_recursion;
 use url::Url;
 
 pub fn mkdirp(dir: &Path) {
-    let dir = path::absolute(dir).unwrap();
+    // let dir = path::absolute(dir).unwrap();
     fs::create_dir_all(&dir).expect("should create all directories");
 }
 

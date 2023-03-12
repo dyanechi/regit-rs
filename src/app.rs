@@ -54,7 +54,8 @@ impl Regit {
             _ref, ..
         } = &self.repo;
 
-        let dest_path= std::path::absolute(dest).unwrap();
+        // let dest_path= std::path::absolute(dest).unwrap();
+        let dest_path= Path::new(dest);
         if !dest_path.exists() {
             warn!(format!("'{}' doesn't exist! Attempting to create path...", dest_path.as_str()));
             mkdirp(&dest_path);
@@ -122,7 +123,7 @@ impl Regit {
 
 impl Regit {
     fn untar(file: &Path, dest: &Path, sub_dir: &str) {
-        let archive_name = file.file_prefix().unwrap().to_str().unwrap();
+        // let archive_name = file.file_prefix().unwrap().to_str().unwrap();
         // let target = format!("{}/{}", dest.as_str(), sub_dir);
         // info!(format!("Extracting '...{}' to '{}'", file.as_str(), dest.as_str()));
 

@@ -1,4 +1,4 @@
-use std::{path::Path, collections::HashMap, fs, time::Instant};
+use std::{path::Path, collections::HashMap, fs};
 
 use super::*;
 use crate::util::mkdirp;
@@ -47,9 +47,8 @@ impl Cache {
         let tree: CacheTree = serde_json::from_reader(reader).unwrap_or_default();
         for t in tree.values() {
             debug!("Retrieved cache for ref:", t);
-
         }
-
+        self.tree = tree;
         self
     }
 

@@ -87,24 +87,20 @@ impl Regit {
     async fn clone_with_tar(&mut self, repo_dir: &Path, dest: &Path) {
         info!("Cloning repository in Tar mode...");
         let repo = self.repo.to_owned();
-        let cache = self.cache.tree_mut();
-        let hash = repo.get_hash_cached(&cache);
+        let hash = repo.get_hash_cached(&self.cache);
         let archive_url = repo.archive_url(&hash);
 
         log!("Archive url is", &archive_url, "...");
-        // let sub_dir = if repo.sub_dir.is_empty() {
-        //     format!("{}-{}", repo.name, hash)
-        // } else { repo.sub_dir.replacen("/", &repo.sub_dir, 1) };
-        let sub_dir = format!("{}-{}/{}", repo.name, hash, repo.sub_dir);
+        let sub_dir = format!("{}-{}{}", repo.name, hash, repo.sub_dir);
         let file = Path::new(&format!("{}/{}.tar.gz", repo_dir.as_str(), hash)).to_owned();
 
         if !dest.exists() { mkdirp(dest) }
-        if std::fs::read_dir(dest).unwrap().count() > 0 {
+        if dest.read_dir().unwrap().count() > 0 {
             error!(format!("Destination '{}' not empty!", dest.display())); panic!("dir not empty");
         }
         if file.exists() && file.is_file() {
             if self.options.cache {
-                success!("File found in cache! Using it to make things faster...".dimmed());
+                success!("File found in cache! Using it to make things faster...");
                 Self::untar(&file, &dest, &sub_dir);
                 return;
             }
@@ -127,34 +123,29 @@ impl Regit {
         // let target = format!("{}/{}", dest.as_str(), sub_dir);
         // info!(format!("Extracting '...{}' to '{}'", file.as_str(), dest.as_str()));
 
-
         let file = std::fs::File::open(file).expect("error opening file");
         let stream = flate2::read::GzDecoder::new(file);
         let mut archive = tar::Archive::new(stream);
 
-        if sub_dir.is_empty() {
-            debug!("Unpacking full archive to destination...");
-            archive.unpack(dest).expect("unpacking directory failed");
-        } else {
-            let mut count_unpacked = 0usize;
-            debug!(format!("Unpacking '{}' to destination...", sub_dir));
-            for entry in archive.entries().unwrap() {
-                let mut entry = entry.unwrap();
-                let entry_path = entry.path().unwrap().as_string();
-                let dir_path = format!("{}/", sub_dir);
+        // let tar_prefix = format!("{}-{}", repo.user, repo.name, repo.sub_dir)
+        let untar_location = sub_dir;
 
-                // log!(&entry_path);
-                // debug!("Matching against:", &format!("{}/", sub_dir));
-                if entry_path.starts_with(&dir_path) {
-                    let untar_file = entry_path.replace(&dir_path, "");
-                    let file_path = format!("{}/{}", dest.as_str(), untar_file);
-                    log!(format!("Extracting '{}' to '{}'...", untar_file, file_path));
-                    entry.unpack(&file_path).expect(" should extract to destination");
-                    count_unpacked += 1;
-                }
-            };
-            if count_unpacked == 0 { warn!("No files unpacked"); }
-            else { success!(&format!("Unpacked {} files", count_unpacked)); }
-        }
+        let mut count_unpacked = 0usize;
+        debug!(format!("Unpacking '{}'...", untar_location));
+        for entry in archive.entries().unwrap() {
+            let mut entry = entry.unwrap();
+            let entry_path = entry.path().unwrap().as_string();
+
+            if entry_path.starts_with(&untar_location) {
+                let untar_file = entry_path.replace(&untar_location, "");
+                let file_path = format!("{}/{}", dest.as_str(), untar_file);
+                log!(format!("Extracting '{}' to '{}'...", untar_file, file_path));
+                entry.unpack(&file_path).expect(" should extract to destination");
+                count_unpacked += 1;
+            }
+        };
+        if count_unpacked == 0 { warn!("No files unpacked"); }
+        else { success!(&format!("Unpacked {} files", count_unpacked)); }
+        // }
     }
 }

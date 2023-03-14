@@ -1,4 +1,4 @@
-use std::{path::Path, collections::HashMap, fs};
+use std::{path::{Path, PathBuf}, collections::HashMap, fs};
 
 use super::*;
 use crate::util::mkdirp;
@@ -34,15 +34,9 @@ impl Cache {
     }
 
     pub fn load(mut self) -> Self {
-        let cfg_path = Path::new(&self.dir).join(CONFIG_FILE);
-        log!("Loading cache from config file", cfg_path.to_str().unwrap());
+        log!("Loading cache from config file...");
 
-        if !cfg_path.exists() {
-            warn!("Path doesn't exist, creating new file...");
-            fs::File::create(&cfg_path).unwrap();
-        }
-
-        let file = fs::File::open(&cfg_path).expect("should open file");
+        let file = fs::File::open(self.cfg_path()).expect("should open file");
         let reader = std::io::BufReader::new(file);
         let tree: CacheTree = serde_json::from_reader(reader).unwrap_or_default();
         for t in tree.values() {
@@ -52,28 +46,21 @@ impl Cache {
         self
     }
 
-    pub fn repair(mut self) -> Self {
-        info!("Repairing cache directory...");
-        success!("Directory fixed!");
-        self
-    }
-
     pub fn update(&mut self, repo_ref: &str, hash: &str, repo_dir: &str) {
         info!("Updating cache...");
-        if let Some(cached_hash) = self.tree.get(repo_ref) {
+        let repo_sig = format!("{}:{}", repo_dir, repo_ref);
+
+        if let Some(cached_hash) = self.tree.get(&repo_sig) {
             if cached_hash == hash { return; }
             if !self.tree.values().collect::<Vec<_>>().contains(&&hash.to_string()) {
                 std::fs::remove_dir(format!("{}/{}.tar.gz", repo_dir, hash)).unwrap();
             }
         }
 
-        self.tree.insert(repo_ref.into(), hash.into());
+        self.tree.insert(repo_sig.into(), hash.into());
 
-        let cache_map_path = Path::new(self.dir()).join(CONFIG_FILE);
-        let cache_file = {
-            if !cache_map_path.exists() { std::fs::File::create(&cache_map_path).unwrap(); }
-            std::fs::File::options().write(true).open(cache_map_path).unwrap()
-        };
+        let cache_file = fs::File::options().write(true).open(self.cfg_path()).unwrap();
+
         serde_json::to_writer(cache_file, &self.tree).expect("should serialize config file");
         success!("Updated");
     }
@@ -85,20 +72,53 @@ impl Cache {
         self.tree.clear();
     }
 
-    pub fn stash_files(&self, dir: &Path, dest: &Path) {
 
+    pub fn repair(mut self) -> Self {
+        info!("Repairing cache directory...");
+        success!("Directory fixed!");
+        self
     }
 
-    pub fn unstash_files(&self, dir: &Path, dest: &Path) {
+    // pub fn stash_files(&self, dir: &Path, dest: &Path) {
 
-    }
+    // }
+
+    // pub fn unstash_files(&self, dir: &Path, dest: &Path) {
+
+    // }
 
     pub(crate) fn dir(&self) -> &str { self.dir.as_ref() }
     pub(crate) fn tree(&self) -> &CacheTree { &self.tree }
     pub(crate) fn tree_mut(&mut self) -> &mut CacheTree { &mut self.tree }
+    
+    pub fn get_cached_hash(&self, repo_dir: &str, repo_ref: &str) -> Option<String> {
+        if let Some(hash) = self.tree.get(&format!("{}:{}", repo_dir, repo_ref)) {
+            return Some(hash.to_owned())
+        }
+        None
+    }
+
+    pub fn get_repo_location(&self, hash: &str) -> Option<String> {
+        log!(format!("Searching hash location: '{}'...", hash));
+        for (k, v) in self.tree.to_owned() {
+            if v == hash {
+                log!(format!("Hash found at location: '{}'", k));
+                return Some(k.to_owned());
+            }
+        }
+        None
+    }
 }
+
 impl Cache {
-    // un
+    fn cfg_path(&self) -> PathBuf {
+        let cfg_path = Path::new(&self.dir).join(CONFIG_FILE);
+        if !cfg_path.exists() {
+            warn!("Path doesn't exist, creating new file...");
+            fs::File::create(&cfg_path).unwrap();
+        }
+        cfg_path
+    }
 }
 
 #[cfg(test)]

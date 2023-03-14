@@ -3,9 +3,9 @@ use std::{collections::HashMap, process, str};
 use super::*;
 use regex::Regex;
 
-use crate::options::ValidModes;
+use crate::{options::ValidModes, cache::Cache};
 
-const SUPPORTED_SITES: [&'static str; 4] = ["github.com", "gitlab.com", "bitbucket.org", "git.sr.ht"];
+const SUPPORTED_DOMAINS: [&'static str; 4] = ["github.com", "gitlab.com", "bitbucket.org", "git.sr.ht"];
 const RE_VALID_REPO: &'static str = r"^(?:(?:https://)?([^:/]+\.[^:/]+)/|git@([^:/]+)[:/]|([^/]+):)?([^/\s]+)/([^/\s#]+)(?:((?:/[^/\s#]+)+))?(?:/)?(?:#(.+))?";
 
 type HashCache = HashMap<String, String>;
@@ -54,16 +54,16 @@ impl Repository {
         }
 
         let mut mode = ValidModes::Tar;
-        if ! SUPPORTED_SITES.contains(&domain.as_str()) {
+        if ! SUPPORTED_DOMAINS.contains(&domain.as_str()) {
             mode = ValidModes::Git;
-            error!("ReGit only supports GitHub, GitLab, SourceHut and BitBucket domains.");
-            panic!("domain not supported");
-            // eprintln!("WARN: Switching to 'Git' mode. It might not work properly.");
+            warn!("ReGit only supports GitHub, GitLab, SourceHut and BitBucket domains.");
+            warn!("Switching to 'Git' mode. It might not work properly and will be slower.");
+            // panic!("domain not supported");
         }
 
         let user = matches.get(4).map_or("", |m| m.as_str()).to_string();
         let name = matches.get(5).map_or("", |m| m.as_str()).to_string();
-        let sub_dir = matches.get(6).map_or("", |m| &m.as_str()[1..m.as_str().len()]).to_string();
+        let sub_dir = matches.get(6).map_or("", |m| m.as_str()).to_string();
         let _ref = matches.get(7).map_or("HEAD", |m| m.as_str()).to_string();
 
         let ssh = format!("git@{domain}:{user}/{name}");
@@ -94,6 +94,14 @@ impl Repository {
         }
     }
 
+    pub fn full_name(&self) -> String {
+        format!("{}/{}{}", self.user, self.name, self.sub_dir)
+    }
+
+    pub fn full_name_ref(&self) -> String {
+        format!("{}:{}", self.full_name(), self._ref)
+    }
+
     pub fn get_hash(&self) -> String {
         if self._ref == "HEAD" {
             return self.refs.iter().find(|_ref| _ref.kind == "HEAD")
@@ -103,10 +111,11 @@ impl Repository {
         self._select_ref(self._ref.as_str()).hash
     }
 
-    pub fn get_hash_cached(&self, cache: &HashCache) -> String {
-        if let Some(r) = cache.get(self._ref.as_str()) {
-            return r.to_owned();
-        } else { self.get_hash() }
+    pub(crate) fn get_hash_cached(&self, cache: &Cache) -> String {
+        if let Some(hash) = cache.get_cached_hash(&self.full_name(), &self._ref) {
+            return hash;
+        }
+        self.get_hash()
     }
 }
 impl Repository {

@@ -1,5 +1,7 @@
 use colored::Colorize;
 
+static mut VERBOSE: bool = true;
+
 macro_rules! cmd {
     ( $program:expr ) => {
         std::process::Command::new($program)
@@ -31,8 +33,6 @@ macro_rules! cmd {
             ))
     };
 }
-
-
 
 
 macro_rules! logger {

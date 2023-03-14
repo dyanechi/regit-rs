@@ -5,11 +5,9 @@ APP_VER="v0.1.0"
 APP_DESC="A tool for fetching git directories"
 APP_FILE="./target/release/$APP_NAME"
 
-INSTALL_DIR="/usr/local/bin" #/usr/local/bin
+INSTALL_DIR="/usr/local/bin"
 APP_LOCATION="$INSTALL_DIR/$APP_NAME"
 
-# required to access write permisions 
-# to directory /usr/local/bin 
 sudo echo ""
 echo "Building cargo package in release mode..."
 bash -c "cargo build --release"
